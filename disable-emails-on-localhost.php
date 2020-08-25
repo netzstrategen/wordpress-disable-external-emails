@@ -44,7 +44,7 @@ class DisableEmailsOnLocalhost {
   public static function option_active_plugins(array $plugins): array {
     $disabled_plugins = [
       'gmail-smtp/main.php',
-      'wp-mail-smtp/wp-mail-smtp.php',
+      'wp-mail-smtp/wp_mail_smtp.php',
     ];
     $plugins = array_diff($plugins, $disabled_plugins);
     return $plugins;
