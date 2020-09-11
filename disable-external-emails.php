@@ -28,6 +28,7 @@ class Plugin {
     }
     add_filter('option_active_plugins', __CLASS__ . '::option_active_plugins');
     add_action('phpmailer_init', __CLASS__ . '::phpmailer_init', 99, 1);
+    add_action('wp_mail', __CLASS__ . '::wp_mail');
   }
 
   /**
@@ -55,9 +56,18 @@ class Plugin {
    * @implements wp_mail
    */
   public static function wp_mail($args) {
-    // @todo Check and process Cc and Bcc email headers.
     if (stripos($args['to'], DISABLE_EXTERNAL_EMAILS_EXCEPT) === FALSE) {
       unset($args['to']);
+      if (!empty($args['headers'])) {
+        if (is_array($args['headers'])) {
+          unset($args['headers']['cc']);
+          unset($args['headers']['bcc']);
+        }
+        else {
+          $args['headers'] = preg_replace("/Cc: (.*)/", '', $args['headers']);
+          $args['headers'] = preg_replace("/Bcc: (.*)/", '', $args['headers']);
+        }
+      }
     }
     return $args;
   }
