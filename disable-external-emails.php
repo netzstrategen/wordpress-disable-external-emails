@@ -21,8 +21,10 @@ if (isset($_SERVER['SERVER_NAME']) && preg_match('@\.(nest|local|test)$@', $_SER
  * The constant DISABLE_EXTERNAL_EMAILS_EXCEPT can be comma-separated list of
  * email addresses or email domains that should still receive emails. Examples:
  *
+ * ```
  * const DISABLE_EXTERNAL_EMAILS_EXCEPT = '@example.com, @netzstrategen.com';
  * const DISABLE_EXTERNAL_EMAILS_EXCEPT = 'only.me@netzstrategen.com';
+ * ```
  */
 class Plugin {
 
