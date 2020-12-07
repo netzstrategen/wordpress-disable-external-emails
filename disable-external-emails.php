@@ -40,7 +40,7 @@ class Plugin {
     else {
       static::$allowedEmails = ['@netzstrategen.com'];
     }
-    static::$allowedEmails = '/' . implode('|', array_map('preg_quote', static::$allowedEmails)) . '/';
+    static::$allowedEmails = '/' . implode('|', array_map('preg_quote', static::$allowedEmails)) . '/i';
 
     add_filter('option_active_plugins', __CLASS__ . '::option_active_plugins');
     add_action('phpmailer_init', __CLASS__ . '::phpmailer_init', 99, 1);
