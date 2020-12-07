@@ -10,22 +10,38 @@ Author URI: https://netzstrategen.com
 
 namespace Netzstrategen\DisableExternalEmails;
 
-if (isset($_SERVER['SERVER_NAME']) && preg_match('@(nest|local|test)$@', $_SERVER['SERVER_NAME'])) {
+// @todo WP-CLI does not have a SERVER_NAME, but many cron jobs can trigger emails - prevent this.
+if (isset($_SERVER['SERVER_NAME']) && preg_match('@\.(nest|local|test)$@', $_SERVER['SERVER_NAME'])) {
   add_action('muplugins_loaded', __NAMESPACE__ . '\Plugin::muplugins_loaded');
 }
 
 /**
  * Prevents accidental sending of emails to external recipients during development.
+ *
+ * The constant DISABLE_EXTERNAL_EMAILS_EXCEPT can be comma-separated list of
+ * email addresses or email domains that should still receive emails. Examples:
+ *
+ * ```
+ * const DISABLE_EXTERNAL_EMAILS_EXCEPT = '@example.com, @netzstrategen.com';
+ * const DISABLE_EXTERNAL_EMAILS_EXCEPT = 'only.me@netzstrategen.com';
+ * ```
  */
 class Plugin {
+
+  private static $allowedEmails = [];
 
   /**
    * @implements muplugins_loaded
    */
   public static function muplugins_loaded() {
-    if (!defined('DISABLE_EXTERNAL_EMAILS_EXCEPT')) {
-      define('DISABLE_EXTERNAL_EMAILS_EXCEPT', '@netzstrategen.com');
+    if (defined('DISABLE_EXTERNAL_EMAILS_EXCEPT')) {
+      static::$allowedEmails = array_map('trim', explode(',', DISABLE_EXTERNAL_EMAILS_EXCEPT));
     }
+    else {
+      static::$allowedEmails = ['@netzstrategen.com'];
+    }
+    static::$allowedEmails = '/' . implode('|', array_map('preg_quote', static::$allowedEmails)) . '/i';
+
     add_filter('option_active_plugins', __CLASS__ . '::option_active_plugins');
     add_action('phpmailer_init', __CLASS__ . '::phpmailer_init', 99, 1);
     add_action('wp_mail', __CLASS__ . '::wp_mail');
@@ -56,7 +72,7 @@ class Plugin {
    * @implements wp_mail
    */
   public static function wp_mail($args) {
-    if (stripos($args['to'], DISABLE_EXTERNAL_EMAILS_EXCEPT) === FALSE) {
+    if (preg_match(static::$allowedEmails, $args['to']) === FALSE) {
       unset($args['to']);
       if (!empty($args['headers'])) {
         if (is_array($args['headers'])) {
@@ -77,15 +93,14 @@ class Plugin {
    *
    * @implements phpmailer_init
    */
-  public static function phpmailer_init(&$phpmailer) {
-    if (is_array($phpmailer->getToAddresses()) && !empty($phpmailer->getToAddresses()[0])) {
-      foreach (array_filter($phpmailer->getToAddresses()[0]) as $address) {
-        if (strpos($address, DISABLE_EXTERNAL_EMAILS_EXCEPT) === FALSE) {
-          $phpmailer->ClearAllRecipients();
-          $phpmailer->ClearAttachments();
-          $phpmailer->ClearCustomHeaders();
-          $phpmailer->ClearReplyTos();
-        }
+  public static function phpmailer_init($phpmailer) {
+    foreach ($phpmailer->getToAddresses() as $recipient) {
+      if (preg_match(static::$allowedEmails, $recipient[0]) === FALSE) {
+        $phpmailer->ClearAllRecipients();
+        $phpmailer->ClearAttachments();
+        $phpmailer->ClearCustomHeaders();
+        $phpmailer->ClearReplyTos();
+        break;
       }
     }
     return $phpmailer;
