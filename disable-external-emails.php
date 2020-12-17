@@ -10,7 +10,7 @@ Author URI: https://netzstrategen.com
 
 namespace Netzstrategen\DisableExternalEmails;
 
-if (!defined('WP_SITEURL') || preg_match('/(sandbox|stage|staging|qa)\.|\.(nest|local|test)/', WP_SITEURL)) {
+if (!defined('WP_SITEURL') || preg_match('@(sandbox|stage|staging|qa)\.|\.(nest|local|test)$@', WP_SITEURL)) {
   add_action('muplugins_loaded', __NAMESPACE__ . '\Plugin::muplugins_loaded');
 }
 
