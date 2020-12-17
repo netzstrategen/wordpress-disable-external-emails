@@ -10,8 +10,7 @@ Author URI: https://netzstrategen.com
 
 namespace Netzstrategen\DisableExternalEmails;
 
-// @todo WP-CLI does not have a SERVER_NAME, but many cron jobs can trigger emails - prevent this.
-if (isset($_SERVER['SERVER_NAME']) && preg_match('@\.(nest|local|test|stage|staging|qa)$@', $_SERVER['SERVER_NAME'])) {
+if (!defined('WP_SITEURL') || preg_match('@(sandbox|stage|staging|qa)\.|\.(nest|local|test)$@', WP_SITEURL)) {
   add_action('muplugins_loaded', __NAMESPACE__ . '\Plugin::muplugins_loaded');
 }
 
