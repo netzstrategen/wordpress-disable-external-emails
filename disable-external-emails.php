@@ -94,7 +94,7 @@ class Plugin {
    */
   public static function phpmailer_init($phpmailer) {
     foreach ($phpmailer->getToAddresses() as $recipient) {
-      if (preg_match(static::$allowedEmails, $recipient[0]) === FALSE) {
+      if (!preg_match(static::$allowedEmails, $recipient[0])) {
         $phpmailer->ClearAllRecipients();
         $phpmailer->ClearAttachments();
         $phpmailer->ClearCustomHeaders();
