@@ -10,7 +10,7 @@ Quick links: [Installation](#installation)
 
 1. Add the plugin as submodule.
     ```sh
-    git submodule add --name disable-external-emails git@github.com:netzstrategen/disable-external-emails.git wp-content/mu-plugins/disable-external-emails
+    git submodule add --name disable-external-emails git@github.com:netzstrategen/wordpress-disable-external-emails.git wp-content/mu-plugins/disable-external-emails
     ```
 
 2. Add a must-use plugin loader file `wp-content/mu-plugins/disable-external-emails.php`:

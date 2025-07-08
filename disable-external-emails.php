@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: Disable external emails
-Description: Prevents accidental sending of emails to external recipients during development.
+Description: Prevents accidental sending of emails to external recipients from non-production environments.
 Version: 1.0.0
 Author: netzstrategen
 Author URI: https://netzstrategen.com
@@ -10,12 +10,12 @@ Author URI: https://netzstrategen.com
 
 namespace Netzstrategen\DisableExternalEmails;
 
-if (!defined('WP_SITEURL') || preg_match('@(qa|sandbox|stage[0-9]*|staging[0-9]*|test[0-9]*)\.|\.(local|nest|test)$@', WP_SITEURL)) {
+if (defined('DISABLE_EXTERNAL_EMAILS_EXCEPT') || !defined('WP_SITEURL') || preg_match('@localhost|(qa|sandbox|stage|staging|test)[0-9]*\.|\.(dev|local|nest|test)$@', WP_SITEURL)) {
   add_action('muplugins_loaded', __NAMESPACE__ . '\Plugin::muplugins_loaded');
 }
 
 /**
- * Prevents accidental sending of emails to external recipients during development.
+ * Prevents accidental sending of emails to external recipients from non-production environments.
  *
  * The constant DISABLE_EXTERNAL_EMAILS_EXCEPT can be comma-separated list of
  * email addresses or email domains that should still receive emails. Examples:
@@ -27,7 +27,7 @@ if (!defined('WP_SITEURL') || preg_match('@(qa|sandbox|stage[0-9]*|staging[0-9]*
  */
 class Plugin {
 
-  private static $allowedEmails = [];
+  private static $allowedEmails;
 
   /**
    * @implements muplugins_loaded
@@ -44,6 +44,19 @@ class Plugin {
     add_filter('option_active_plugins', __CLASS__ . '::option_active_plugins');
     add_action('phpmailer_init', __CLASS__ . '::phpmailer_init', 99, 1);
     add_action('wp_mail', __CLASS__ . '::wp_mail');
+  }
+
+  /**
+   * Returns whether a given email address is in the list of allowed recipients.
+   *
+   * @param string $email
+   *   The email address to check.
+   *
+   * @return bool
+   *   TRUE if the recipient is allowed to receive emails, FALSE otherwise.
+   */
+  public static function isEmailAllowed(string $email): bool {
+    return empty(static::$allowedEmails) || preg_match(static::$allowedEmails, $email);
   }
 
   /**
@@ -71,7 +84,7 @@ class Plugin {
    * @implements wp_mail
    */
   public static function wp_mail($args) {
-    if (!preg_match(static::$allowedEmails, $args['to'])) {
+    if (!Plugin::isEmailAllowed($args['to'])) {
       unset($args['to']);
       if (!empty($args['headers'])) {
         if (is_array($args['headers'])) {
@@ -94,7 +107,7 @@ class Plugin {
    */
   public static function phpmailer_init($phpmailer) {
     foreach ($phpmailer->getToAddresses() as $recipient) {
-      if (!preg_match(static::$allowedEmails, $recipient[0])) {
+      if (!Plugin::isEmailAllowed($recipient[0])) {
         $phpmailer->ClearAllRecipients();
         $phpmailer->ClearAttachments();
         $phpmailer->ClearCustomHeaders();
