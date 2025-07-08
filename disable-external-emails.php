@@ -3,7 +3,7 @@
 /*
 Plugin Name: Disable external emails
 Description: Prevents accidental sending of emails to external recipients from non-production environments.
-Version: 1.0.0
+Version: 1.1.0
 Author: netzstrategen
 Author URI: https://netzstrategen.com
 */
